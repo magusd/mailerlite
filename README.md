@@ -3,21 +3,35 @@
 
 ## Install the operator
 
+### Option 1 - pre-built container (linux/arm64)
+
 ```bash
 make
 make install
-
-#to use the pre-built image docker.io/unclelobs/mailerlite-controller
 make deploy
+```
 
-#to build your own
+### Option 2 - build/deploy
+
+```bash
+make
+make install
 make docker-build IMG="youruser/image:tag"
 make docker-push IMG="youruser/image:tag"
-
 make deploy
 ```
 
 ## Create the secret and senderconfig
+
+### Option 1 kustomize
+
+```bash
+cp config/samples/samples-secret.yaml config/samples/secret.yaml
+vim config/samples/secret.yaml # fill in the values with base64 encoded text
+kubectl apply -k config/samples/
+```
+
+### Option 2 manifests
 
 ```yaml
 cat <<EOF | kubectl apply -f -
@@ -43,8 +57,6 @@ spec:
   senderEmail: ${SENDER_EMAIL}
 EOF
 ```
-
-## Send an email with mailgun
 
 ```yaml
 cat <<EOF | kubectl apply -f -

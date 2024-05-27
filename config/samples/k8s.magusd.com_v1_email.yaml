@@ -10,6 +10,7 @@ spec:
   recipientEmail: vitor.lobs@gmail.com
   subject: hello
   body: world mailgun!
+
 ---
 apiVersion: k8s.magusd.com.my.domain/v1
 kind: Email

@@ -18,7 +18,10 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	k8smagusdcomv1 "k8s.magusd.com/api/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -65,24 +68,42 @@ func (r *EmailSenderConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		logger.Info("sender config updated")
 	}
 
-	//secretConfig := &corev1.Secret{}
-	//secretRef := types.NamespacedName{
-	//	Namespace: req.NamespacedName.Namespace,
-	//	Name:      emailConfig.Spec.ApiTokenSecretRef,
-	//}
+	if emailConfig.Spec.SenderEmail == "" {
+		//todo update to misconfigured
+		r.Recorder.Event(&emailConfig, "Warning", "Validation", "senderEmail is required")
+	}
 
-	//if err := r.Client.Get(ctx, secretRef, secretConfig); err != nil {
-	//	logger.Error(err, "unable to find secret apiTokenSecretRef in this namespace")
-	//	r.Recorder.Event(&emailConfig, "Warning", "NotFound",
-	//		fmt.Sprintf("can't find secret %s", emailConfig.Spec.ApiTokenSecretRef))
-	//	return ctrl.Result{}, client.IgnoreNotFound(err)
-	//}
-	//
-	//for key, value := range secretConfig.Data {
-	//	fmt.Printf("Key: %s, Value: %s\n", key, string(value))
-	//}
+	secretConfig := &corev1.Secret{}
+	namespace := req.NamespacedName.Namespace
+	if namespace == "" {
+		namespace = "default"
+	}
+	secretRef := types.NamespacedName{
+		Namespace: namespace,
+		Name:      emailConfig.Spec.ApiTokenSecretRef,
+	}
 
-	//validate credentials
+	if err := r.Client.Get(ctx, secretRef, secretConfig); err != nil {
+		logger.Error(err, "unable to find secret apiTokenSecretRef in this namespace")
+		r.Recorder.Event(&emailConfig, "Warning", "NotFound",
+			fmt.Sprintf("can't find secret %s", emailConfig.Spec.ApiTokenSecretRef))
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	requiredFields := []string{"domain", "provider", "token"}
+
+	for _, field := range requiredFields {
+		_, ok := secretConfig.Data[field]
+		if !ok {
+			r.Recorder.Event(&emailConfig, "Warning", "Validation", fmt.Sprintf("secret %s is missing required field: %s", emailConfig.Spec.ApiTokenSecretRef, field))
+		}
+	}
+
+	for key, value := range secretConfig.Data {
+		fmt.Printf("Key: %s, Value: %s\n", key, string(value))
+	}
+
+	//todo validate credentials and fields
 
 	//ctrl.SetControllerReference(job, pod, r.Scheme)
 

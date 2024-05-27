@@ -24,6 +24,7 @@ import (
 	"github.com/mailgun/mailgun-go/v4"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	"strings"
 	"time"
 
@@ -38,7 +39,8 @@ import (
 // EmailReconciler reconciles a Email object
 type EmailReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=k8s.magusd.com.my.domain,resources=emails,verbs=get;list;watch;create;update;patch;delete
@@ -72,6 +74,7 @@ func (r *EmailReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	case "":
 		email.Status.DeliveryStatus = k8smagusdcomv1.EmailPendingStatus
 		r.Status().Update(ctx, &email)
+		r.Recorder.Event(&email, "Normal", "Queued", "Email queued")
 	}
 
 	emailConfig := k8smagusdcomv1.EmailSenderConfig{}
@@ -82,6 +85,8 @@ func (r *EmailReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	if err != nil {
 		logger.Error(err, "Could not find emailSenderConfig")
+		r.Recorder.Event(&email, "Warning", "Validation",
+			fmt.Sprintf("can't find EmailSenderConfig %s", email.Spec.SenderConfigRef))
 		return ctrl.Result{}, err
 	}
 
@@ -92,14 +97,15 @@ func (r *EmailReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		logger.Info("Error sending email " + err.Error())
 		email.Status.DeliveryStatus = k8smagusdcomv1.EmailErrorStatus
 		email.Status.Error = err.Error()
+		r.Recorder.Event(&email, "Warning", "Failed", err.Error())
 		r.Status().Update(ctx, &email)
 	} else {
 		logger.Info("Email sent" + req.NamespacedName.String())
 		email.Status.DeliveryStatus = k8smagusdcomv1.EmailSentStatus
 		email.Status.MessageId = id
+		r.Recorder.Event(&email, "Normal", "Send", "Email sent")
 		r.Status().Update(ctx, &email)
 	}
-
 	return ctrl.Result{}, err
 }
 
@@ -154,7 +160,7 @@ func (r *EmailReconciler) SendMailgunEmail(email k8smagusdcomv1.Email, emailConf
 	defer cancel()
 
 	// Send the message with a 10 second timeout
-	resp, id, err := mg.Send(ctx, message)
+	_, id, err := mg.Send(ctx, message)
 
 	if err != nil {
 		return "", err
@@ -162,17 +168,12 @@ func (r *EmailReconciler) SendMailgunEmail(email k8smagusdcomv1.Email, emailConf
 
 	id = strings.Replace(id, "<", "", 1)
 	id = strings.Replace(id, ">", "", 1)
-	fmt.Printf("ID: %s Resp: %s\n", id, resp)
+
 	return id, nil
 }
 
 func (r *EmailReconciler) SendMailSendEmail(email k8smagusdcomv1.Email, emailConfig k8smagusdcomv1.EmailSenderConfig, secret corev1.Secret) (string, error) {
 	var APIToken = string(secret.Data["token"])
-	fmt.Println(emailConfig.Spec.SenderEmail)
-	fmt.Println(emailConfig.Spec.SenderEmail)
-	fmt.Println(emailConfig.Spec.SenderEmail)
-	fmt.Println(emailConfig.Spec.SenderEmail)
-	fmt.Println(emailConfig.Spec.SenderEmail)
 	ms := mailersend.NewMailersend(APIToken)
 
 	ctx := context.Background()
