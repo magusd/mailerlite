@@ -1,4 +1,6 @@
 ## Append samples of your project ##
 resources:
 - k8s.magusd.com_v1_emailsenderconfig.yaml
+- secret.yaml
+- k8s.magusd.com_v1_email.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
