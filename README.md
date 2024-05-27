@@ -6,6 +6,14 @@
 ```bash
 make
 make install
+
+#to use the pre-built image docker.io/unclelobs/mailerlite-controller
+make deploy
+
+#to build your own
+make docker-build IMG="youruser/image:tag"
+make docker-push IMG="youruser/image:tag"
+
 make deploy
 ```
 
