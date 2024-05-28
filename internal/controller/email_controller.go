@@ -91,7 +91,6 @@ func (r *EmailReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	}
 
 	logger.Info("Sending email " + req.NamespacedName.String())
-	//_, err = r.SendEmail(ctx, email, emailConfig)
 	id, err := r.SendEmail(ctx, email, emailConfig)
 	if err != nil {
 		logger.Info("Error sending email " + err.Error())

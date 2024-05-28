@@ -69,7 +69,6 @@ func (r *EmailSenderConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	if emailConfig.Spec.SenderEmail == "" {
-		//todo update to misconfigured
 		r.Recorder.Event(&emailConfig, "Warning", "Validation", "senderEmail is required")
 	}
 
@@ -97,10 +96,6 @@ func (r *EmailSenderConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		if !ok {
 			r.Recorder.Event(&emailConfig, "Warning", "Validation", fmt.Sprintf("secret %s is missing required field: %s", emailConfig.Spec.ApiTokenSecretRef, field))
 		}
-	}
-
-	for key, value := range secretConfig.Data {
-		fmt.Printf("Key: %s, Value: %s\n", key, string(value))
 	}
 
 	return ctrl.Result{}, nil
