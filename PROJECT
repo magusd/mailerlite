@@ -17,4 +17,13 @@ resources:
   kind: EmailSenderConfig
   path: k8s.magusd.com/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: k8s.magusd.com
+  kind: Email
+  path: k8s.magusd.com/api/v1
+  version: v1
 version: "3"

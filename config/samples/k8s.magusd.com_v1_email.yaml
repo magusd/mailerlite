@@ -1,23 +1,27 @@
 apiVersion: k8s.magusd.com.my.domain/v1
-kind: EmailSenderConfig
+kind: Email
 metadata:
   labels:
     app.kubernetes.io/name: mailerlite
     app.kubernetes.io/managed-by: kustomize
-  name: mailgun
+  name: email-sample
 spec:
-  apiTokenSecretRef: mailgun-token
-  senderEmail: vitor.lobs@gmail.com
+  senderConfigRef: mailgun
+  recipientEmail: vitor.lobs@gmail.com
+  subject: hello
+  body: world mailgun!
 
 ---
-
 apiVersion: k8s.magusd.com.my.domain/v1
-kind: EmailSenderConfig
+kind: Email
 metadata:
   labels:
     app.kubernetes.io/name: mailerlite
     app.kubernetes.io/managed-by: kustomize
-  name: mailsend
+  name: email-sample-mailsend
 spec:
-  apiTokenSecretRef: mailsend-token
-  senderEmail: vitor.lobs@trial-jy7zpl9xqjrl5vx6.mlsender.net
+  senderConfigRef: mailsend
+  recipientEmail: vitor.lobs@gmail.com
+  subject: hello mailsend
+  body: world mailsend!
+

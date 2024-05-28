@@ -124,10 +124,19 @@ func main() {
 	}
 
 	if err = (&controller.EmailSenderConfigReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("emailsenderconfig-controller"),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EmailSenderConfig")
+		os.Exit(1)
+	}
+	if err = (&controller.EmailReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor("email-controller"),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Email")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
