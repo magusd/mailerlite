@@ -103,10 +103,6 @@ func (r *EmailSenderConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		fmt.Printf("Key: %s, Value: %s\n", key, string(value))
 	}
 
-	//todo validate credentials and fields
-
-	//ctrl.SetControllerReference(job, pod, r.Scheme)
-
 	return ctrl.Result{}, nil
 }
 
